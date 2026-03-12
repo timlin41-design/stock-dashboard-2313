@@ -1,0 +1,37 @@
+name: Daily Stock Dashboard Update
+
+on:
+  schedule:
+    # 設定為台灣時間下午 6 點 (UTC 時間上午 10 點)，每週一至週五執行
+    - cron: '0 10 * * 1-5'
+  workflow_dispatch: # 允許您隨時手動點擊按鈕執行
+
+permissions:
+  contents: write # 賦予寫入權限以更新網頁檔
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取得程式碼
+        uses: actions/checkout@v4
+
+      - name: 設定 Python 環境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 安裝所需套件
+        run: pip install pandas plotly FinMind fugle-marketdata
+
+      - name: 執行資料抓取與圖表生成
+        env:
+          FUGLE_TOKEN: ${{ secrets.FUGLE_TOKEN }}
+          # FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }} # 若有設定請解除此行註解
+        run: python main.py
+
+      - name: 部署至 GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./ # 假設程式碼產出的檔案為 index.html，並存放於根目錄
